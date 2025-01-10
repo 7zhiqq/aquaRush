@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .table-scrollable {
+        max-width: 100%;
+        max-height: 500px;
+        overflow-x: auto;
+        overflow-y: auto;
+        display: block;
+    }
+
+    .table thead .freeze {
+        position: sticky;
+        top: 0;
+        background-color: #343a40;
+        z-index: 1;
+    }
+
+    .table thead tr.table-dark {
+        position: sticky;
+        top: 70px;
+        background-color: #212529;
+        z-index: 1;
+    }
+
+    .table th, .table td {
+        padding: 10px;
+    }
+
+    .table-scrollable .driver {
+        max-width: 50%;
+        max-height: 500px;
+        overflow-x: auto;
+        overflow-y: auto;
+        display: block;
+    }
+
+    .card-summary {
+        margin-bottom: 20px;
+    }
+</style>
+
+{% if user.is_authenticated %}
+    {% if user.is_superuser %}
+        <h5>Hello, admin!</h5>
+        <h6>All Users Created</h6>
+
+        <div class="table">
+            <table class="table table-striped">
+                <thead>
+                    <tr class="table-dark">
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                            {% for group in user.groups.all %}
+                                {{ group.name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                No role assigned.
+                            {% endfor %}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5">No users found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <h4>Welcome, {{ user.first_name }} {{ user.last_name }}!</h4>
+        <p>Position: 
+            {% for group in user.groups.all %}
+                {{ group.name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                No role assigned.
+            {% endfor %}</p>
+    {% endif %}
+
+    {% if is_cashier or is_staff %}
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card card-summary bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <p class="card-text">{{ pending_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-summary bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Out for Delivery</h5>
+                    <p class="card-text">{{ out_for_delivery_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-summary bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Delivered</h5>
+                    <p class="card-text">{{ delivered_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-summary bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Cancelled</h5>
+                    <p class="card-text">{{ cancelled_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div class="table-scrollable">
+            <table class="table table-striped">
+                <thead>
+                    <tr class="freeze">
+                        <th colspan="5" style="text-align: right;">
+                            <div class="mb-3 me-2">
+                                <button type="button" class="btn btn-outline-success d-flex align-items-center" style="height: 38px;">
+                                    <a class="nav-link text-success" href="{% url 'new_order' %}">
+                                        <i class="fas fa-plus-circle" style="font-size: 18px;"></i>
+                                        <span class="d-none d-sm-inline ms-2">New Order</span>
+                                    </a>
+                                </button>
+                            </div>
+                        </th>
+                        <th colspan="2" class="text-end">
+                            <form method="GET" action="{% url 'home' %}" class="d-flex justify-content-end">
+                                <div class="mb-3 me-2">
+                                    <select name="status_filter" class="form-control">
+                                        <option value="">All Statuses</option>
+                                        <option value="Out for Delivery" {% if request.GET.status_filter == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+                                        <option value="Cancelled" {% if request.GET.status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                        <option value="Delivered" {% if request.GET.status_filter == 'Delivered' %}selected{% endif %}>Delivered</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary d-flex align-items-center" title="Filter" style="height: 38px;">
+                                    <i class="fas fa-filter" style="font-size: 18px;"></i>
+                                    <span class="d-none d-sm-inline ms-2">Filter</span>
+                                </button>
+                            </form>
+                        </th>
+                    </tr>
+                    <tr class="table-dark">
+                        <th>Order No.</th>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                        <th>Driver</th>
+                        <th>Delivery Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                    {% for order in orders %}
+                        <tr>
+                            <td>{{ order.order_number }}</td>
+                            <td>{{ order.customer_name }}</td>
+                            <td>{{ order.quantity }} Galloon/s</td>
+                            <td>{{ order.driver }}</td>
+                            <td>{{ order.delivery_datetime }}</td>
+                            <td>{{ order.status }}</td>
+                            <td class="d-flex justify-content-start">
+                                {% if order.status != 'Delivered' %}
+                                    {% if is_staff %}
+                                        <div class="dropdown me-2">
+                                            <button class="btn btn-warning dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Update
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                <li><a class="dropdown-item" href="{% url 'update_order_status' order.id 'Out for Delivery' %}">Out for Delivery</a></li>
+                                                <li><a class="dropdown-item" href="{% url 'update_order_status' order.id 'Cancelled' %}">Cancel</a></li>
+                                            </ul>
+                                        </div>
+                                    {% else %}
+                                        <a href="#" class="btn btn-secondary me-2">Update</a>
+                                    {% endif %}
+                                    <a href="{% url 'edit_order' order.id %}" class="btn btn-primary me-2">Edit</a>
+                                {% endif %}
+                                <a href="{% url 'order_detail' order.id %}" class="btn btn-info">View</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7">No orders available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if is_driver %}
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card card-summary bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <p class="card-text">{{ pending_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-summary bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Out for Delivery</h5>
+                    <p class="card-text">{{ out_for_delivery_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-summary bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Delivered</h5>
+                    <p class="card-text">{{ delivered_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-summary bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Cancelled</h5>
+                    <p class="card-text">{{ cancelled_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div class="table-scrollable driver">
+            <table class="table table-striped">
+                <thead>
+                    <tr class="freeze">
+                        <th colspan="6"><h5>Assigned Delivery</h5></th>
+                        <th colspan="2">
+                            <form method="GET" action="{% url 'home' %}" class="d-flex">
+                                <div class="mb-3 me-2">
+                                    <select name="status_filter" class="form-control">
+                                        <option value="">All Statuses</option>
+                                        <option value="Out for Delivery" {% if request.GET.status_filter == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+                                        <option value="Cancelled" {% if request.GET.status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                        <option value="Delivered" {% if request.GET.status_filter == 'Delivered' %}selected{% endif %}>Delivered</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary d-flex align-items-center" title="Filter" style="height: 38px;">
+                                    <i class="fas fa-filter" style="font-size: 18px;"></i>
+                                    <span class="d-none d-sm-inline ms-2">Filter</span>
+                                </button>
+                            </form>
+                        </th>
+                    </tr>
+                    <tr class="table-dark">
+                        <th>Order No.</th>
+                        <th>Customer</th>
+                        <th>Address</th>
+                        <th>Number</th>
+                        <th>Quantity</th>
+                        <th>Delivery Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                    {% for order in orders %}
+                        {% if order.driver == user %}
+                            <tr>
+                                <td>{{ order.order_number }}</td>
+                                <td>{{ order.customer_name }}</td>
+                                <td>{{ order.shipping_address }}</td>
+                                <td>{{ order.phone_number }}</td>
+                                <td>{{ order.quantity }} Galloon/s</td>
+                                <td>{{ order.delivery_datetime }}</td>
+                                <td>
+                                    {% if order.status == 'Out for Delivery' %}
+                                        <a href="{% url 'mark_order_delivered' order.id %}" class="btn btn-success">Delivered</a>
+                                    {% else %}
+                                        {{ order.status }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'order_detail' order.id %}" class="btn btn-info">View</a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% empty %}
+                        <tr>
+                            <td colspan="7">No orders assigned to you.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+{% else %}
+    <div class="col-md-6 offset-md-3">
+        <h1>Log-in</h1>
+        <br/>
+        <form method="POST" action="{% url 'home' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <input type="text" class="form-control" name="username" placeholder="Username" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" name="password" placeholder="Password" required>
+            </div>
+            <br/>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+    </div>
+{% endif %}
+{% endblock %}

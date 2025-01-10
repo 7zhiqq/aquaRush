@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <h4>Order #{{ order.order_number }} Details</h4>
+        <p><strong>Customer Name:</strong> {{ order.customer_name }}</p>
+        <p><strong>Shipping Address:</strong> {{ order.shipping_address }}</p>
+        <p><strong>Phone Number:</strong> {{ order.phone_number }}</p>
+        <p><strong>Quantity:</strong> {{ order.quantity }} Galloon/s</p>
+        <p><strong>To Pay:</strong> {{ order.amount_to_pay }}</p>
+        <p><strong>Driver:</strong> {{ order.delivery_datetime }}</p>
+        <p><strong>Delivery Date:</strong> {{ order.delivery_datetime }}</p>
+        
+        <button onclick="window.print()" class="btn btn-outline-primary mt-3" id="print-button">Print Receipt</button>
+        <button class="btn btn-outline-secondary mt-3"><a href="{% url 'home' %}" id="back-button">Back</a></button>
+    </div>
+
+    <style>
+        @media print {
+            #print-button, #back-button {
+                display: none;  
+            }
+        }
+    </style>
+{% endblock %}

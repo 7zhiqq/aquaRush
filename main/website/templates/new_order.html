@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="col-md-6 offset-md-3">
+    <h1>New Order</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="btn btn-outline-primary">Submit Order</button>
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">Cancel</a>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr('.flatpickr-datetime', {
+            enableTime: true,       
+            dateFormat: "Y-m-d H:i", 
+            minDate: "today",        
+            time_24hr: true,         
+            step: 15                 
+        });
+    });
+</script>
+{% endblock %}
+
