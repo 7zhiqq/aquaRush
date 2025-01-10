@@ -1,4 +1,3 @@
-Sure! Below is a complete `README.md` file for your project, including detailed instructions for setting up and running the project with a MySQL database.
 
 ```markdown
 # AquaRush - Order and Delivery Management
