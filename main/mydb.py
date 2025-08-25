@@ -2,7 +2,7 @@ import pymysql
 database = pymysql.connect(
     host = 'localhost',
     user = 'root',
-    password = 'sevenzhiq'
+    password = '123456'
 )
 # prepare cursor object
 cursorObject = database.cursor()
